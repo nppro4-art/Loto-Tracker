@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Loto Statistiques</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Crimson+Pro:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --or:#c9a84c;--or-clair:#e8c97a;--or-sombre:#8b6914;
+    --bleu-nuit:#0a0e1a;--bleu-profond:#0f1628;--bleu-moyen:#1a2545;--bleu-accent:#1e3a6e;
+    --blanc:#f5f0e8;--blanc-chaud:#ede8d8;--gris:#6b7a99;
+    --rouge:#c0392b;--vert:#27ae60;--orange:#e67e22;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Crimson Pro',Georgia,serif;background:var(--bleu-nuit);color:var(--blanc);min-height:100vh;overflow-x:hidden}
+  body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 20% 50%,rgba(201,168,76,.04) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(30,58,110,.3) 0%,transparent 50%);pointer-events:none;z-index:0}
+  .stars{position:fixed;inset:0;pointer-events:none;z-index:0}
+  .star{position:absolute;background:var(--or-clair);border-radius:50%;animation:scintille var(--dur,3s) ease-in-out infinite;animation-delay:var(--delay,0s)}
+  @keyframes scintille{0%,100%{opacity:.1;transform:scale(1)}50%{opacity:.7;transform:scale(1.5)}}
+  header{position:relative;z-index:10;text-align:center;padding:3rem 2rem 2rem;border-bottom:1px solid rgba(201,168,76,.2)}
+  .titre-principal{font-family:'Playfair Display',serif;font-size:clamp(2.4rem,6vw,4.5rem);font-weight:900;letter-spacing:.05em;color:var(--or);text-shadow:0 0 40px rgba(201,168,76,.3);line-height:1.1}
+  .titre-principal span{display:block;font-size:.45em;font-weight:400;letter-spacing:.3em;color:var(--gris);text-transform:uppercase;margin-top:.5rem}
+  .decorline{display:flex;align-items:center;justify-content:center;gap:1rem;margin:1.2rem 0}
+  .decorline::before,.decorline::after{content:'';flex:1;max-width:120px;height:1px;background:linear-gradient(90deg,transparent,var(--or))}
+  .decorline::after{background:linear-gradient(90deg,var(--or),transparent)}
+  .decorline-diamond{width:8px;height:8px;background:var(--or);transform:rotate(45deg)}
+  .tabs-wrapper{position:relative;z-index:10;display:flex;gap:0;max-width:750px;margin:2rem auto 0;padding:0 1rem}
+  .tab-btn{flex:1;padding:1rem 1.2rem;font-family:'Crimson Pro',serif;font-size:1rem;font-weight:600;letter-spacing:.05em;cursor:pointer;border:1px solid rgba(201,168,76,.3);background:rgba(15,22,40,.8);color:var(--gris);transition:all .3s ease}
+  .tab-btn:first-child{border-radius:6px 0 0 6px}
+  .tab-btn:last-child{border-radius:0 6px 6px 0;border-left:none}
+  .tab-btn.actif{background:linear-gradient(135deg,rgba(201,168,76,.15),rgba(201,168,76,.05));color:var(--or);border-color:var(--or);box-shadow:0 0 20px rgba(201,168,76,.15),inset 0 1px 0 rgba(201,168,76,.3)}
+  main{position:relative;z-index:10;max-width:1300px;margin:0 auto;padding:2rem 1rem 3rem}
+  .panneau{display:none;animation:fadeIn .4s ease}
+  .panneau.actif{display:block}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+  /* === ZONE UPLOAD === */
+  .upload-zone{border:2px dashed rgba(201,168,76,.3);border-radius:12px;padding:2.5rem 2rem;text-align:center;background:rgba(15,22,40,.7);transition:all .3s;cursor:pointer;position:relative;overflow:hidden}
+  .upload-zone:hover,.upload-zone.drag{border-color:var(--or);background:rgba(201,168,76,.05)}
+  .upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+  .upload-icone{font-size:3rem;margin-bottom:1rem}
+  .upload-titre{font-family:'Playfair Display',serif;font-size:1.4rem;color:var(--or);margin-bottom:.5rem}
+  .upload-sous{color:var(--gris);font-size:.95rem;line-height:1.6}
+  .upload-sous strong{color:var(--blanc-chaud)}
+
+  /* Étapes instructions */
+  .etapes{display:flex;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap}
+  .etape{flex:1;min-width:200px;background:rgba(15,22,40,.8);border:1px solid rgba(201,168,76,.15);border-radius:8px;padding:1.2rem}
+  .etape-num{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--or-sombre),var(--or));color:var(--bleu-nuit);font-family:'Playfair Display',serif;font-weight:700;font-size:1rem;display:flex;align-items:center;justify-content:center;margin-bottom:.7rem}
+  .etape h4{color:var(--or);font-size:1rem;margin-bottom:.3rem}
+  .etape p{color:var(--gris);font-size:.88rem;line-height:1.5}
+  .etape a{color:var(--or-clair);text-decoration:none;border-bottom:1px solid rgba(201,168,76,.3)}
+  .etape a:hover{border-color:var(--or)}
+
+  /* Statut */
+  .statut-bar{background:rgba(15,22,40,.9);border:1px solid rgba(201,168,76,.15);border-radius:6px;padding:.8rem 1.2rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:1rem;font-size:.95rem}
+  .statut-indicateur{width:10px;height:10px;border-radius:50%;background:var(--gris);flex-shrink:0;transition:background .3s}
+  .statut-indicateur.chargement{background:var(--or);animation:pulse 1s ease-in-out infinite}
+  .statut-indicateur.ok{background:var(--vert)}
+  .statut-indicateur.erreur{background:var(--rouge)}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+  /* === MANUEL === */
+  .manuel-form{background:rgba(15,22,40,.7);border:1px solid rgba(201,168,76,.2);border-radius:10px;padding:2rem;margin-bottom:2rem}
+  .manuel-form h3{font-family:'Playfair Display',serif;color:var(--or);font-size:1.4rem;margin-bottom:1.2rem}
+  .saisie-ligne{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem;align-items:flex-end}
+  .saisie-grp{display:flex;flex-direction:column;gap:.4rem}
+  .saisie-grp label{font-size:.8rem;text-transform:uppercase;letter-spacing:.1em;color:var(--gris)}
+  .saisie-grp input{width:60px;padding:.6rem .4rem;background:rgba(26,37,69,.8);border:1px solid rgba(201,168,76,.25);border-radius:4px;color:var(--blanc);font-family:'Crimson Pro',serif;font-size:1.1rem;text-align:center;transition:border-color .2s}
+  .saisie-grp input:focus{outline:none;border-color:var(--or);box-shadow:0 0 8px rgba(201,168,76,.2)}
+  .btn-action{padding:.7rem 1.4rem;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.4);color:var(--or);font-family:'Crimson Pro',serif;font-size:1rem;font-weight:600;border-radius:4px;cursor:pointer;transition:all .2s;margin-bottom:2px}
+  .btn-action:hover{background:rgba(201,168,76,.2);box-shadow:0 0 12px rgba(201,168,76,.2)}
+  .btn-action.vert{background:rgba(39,174,96,.1);border-color:rgba(39,174,96,.4);color:#2ecc71}
+  .btn-action.rouge{background:rgba(192,57,43,.1);border-color:rgba(192,57,43,.4);color:#e74c3c}
+  .tirages-list{max-height:180px;overflow-y:auto;display:flex;flex-direction:column;gap:.4rem;scrollbar-width:thin;scrollbar-color:var(--or-sombre) transparent}
+  .tirage-item{display:flex;align-items:center;gap:.8rem;padding:.5rem .8rem;background:rgba(26,37,69,.5);border-radius:4px;border-left:3px solid var(--or-sombre);font-size:.95rem;animation:fadeIn .2s ease}
+  .boules{display:flex;gap:.3rem;flex-wrap:wrap}
+  .boule-mini{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--or-sombre),var(--or));color:var(--bleu-nuit);font-size:.7rem;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .boule-mini.chance{background:linear-gradient(135deg,#1a5276,#2980b9);color:white}
+  .btn-suppr{margin-left:auto;background:none;border:none;color:var(--rouge);cursor:pointer;font-size:1.1rem;opacity:.5;transition:opacity .2s;padding:.2rem}
+  .btn-suppr:hover{opacity:1}
+  .nb-badge{display:inline-flex;align-items:center;gap:.5rem;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.3);padding:.3rem .8rem;border-radius:20px;font-size:.85rem;color:var(--or);margin-bottom:.8rem}
+  .erreur-msg{color:#e74c3c;font-size:.9rem;padding:.5rem;background:rgba(192,57,43,.1);border-radius:4px;margin-top:.5rem;display:none}
+
+  /* === TABLEAU === */
+  .tableau-section{margin-top:1rem}
+  .tableau-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem}
+  .tableau-titre{font-family:'Playfair Display',serif;font-size:1.6rem;color:var(--or)}
+  .legende{display:flex;gap:1rem;flex-wrap:wrap;font-size:.8rem;color:var(--gris)}
+  .legende-item{display:flex;align-items:center;gap:.4rem}
+  .legende-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+  .top5{display:flex;gap:.6rem;margin-bottom:2rem;flex-wrap:wrap}
+  .top5-titre{width:100%;font-family:'Playfair Display',serif;font-size:1rem;color:var(--or);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.5rem;opacity:.7}
+  .top5-item{flex:1;min-width:60px;max-width:90px;background:linear-gradient(135deg,rgba(201,168,76,.15),rgba(201,168,76,.04));border:1px solid rgba(201,168,76,.35);border-radius:8px;padding:.8rem .4rem;text-align:center}
+  .top5-rang{font-size:.65rem;color:var(--or);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.3rem}
+  .top5-num{font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:900;color:var(--or)}
+  .top5-freq-text{font-size:.7rem;color:var(--gris);margin-top:.2rem}
+  .filtres{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.5rem}
+  .filtre-btn{padding:.4rem .9rem;background:rgba(26,37,69,.6);border:1px solid rgba(201,168,76,.2);color:var(--gris);font-family:'Crimson Pro',serif;font-size:.9rem;border-radius:20px;cursor:pointer;transition:all .2s}
+  .filtre-btn.actif{background:rgba(201,168,76,.15);border-color:var(--or);color:var(--or)}
+  .grille-numeros{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:.7rem}
+  .carte-numero{background:rgba(15,22,40,.9);border:1px solid rgba(201,168,76,.12);border-radius:8px;padding:.9rem .6rem;text-align:center;transition:all .3s ease;position:relative;overflow:hidden;cursor:default}
+  .carte-numero::before{content:'';position:absolute;bottom:0;left:0;right:0;height:var(--barre,0%);background:linear-gradient(180deg,transparent,var(--couleur-barre,rgba(201,168,76,.1)));transition:height .6s ease}
+  .carte-numero:hover{border-color:rgba(201,168,76,.4);transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.3)}
+  .num-chiffre{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:700;color:var(--blanc);line-height:1;margin-bottom:.5rem;position:relative;z-index:1}
+  .num-freq{font-size:.75rem;color:var(--gris);text-transform:uppercase;letter-spacing:.08em;position:relative;z-index:1}
+  .num-valeur{font-size:1rem;font-weight:600;color:var(--blanc-chaud);position:relative;z-index:1}
+  .num-retard{font-size:.7rem;color:var(--gris);margin-top:.25rem;position:relative;z-index:1}
+  .num-proba{display:inline-block;margin-top:.4rem;padding:.15rem .4rem;border-radius:10px;font-size:.72rem;font-weight:600;position:relative;z-index:1}
+  .chaleur-5{--couleur-barre:rgba(192,57,43,.25)}.chaleur-5 .num-proba{background:rgba(192,57,43,.2);color:#e74c3c}
+  .chaleur-4{--couleur-barre:rgba(230,126,34,.25)}.chaleur-4 .num-proba{background:rgba(230,126,34,.2);color:#e67e22}
+  .chaleur-3{--couleur-barre:rgba(201,168,76,.2)}.chaleur-3 .num-proba{background:rgba(201,168,76,.15);color:var(--or)}
+  .chaleur-2{--couleur-barre:rgba(39,174,96,.2)}.chaleur-2 .num-proba{background:rgba(39,174,96,.15);color:#2ecc71}
+  .chaleur-1{--couleur-barre:rgba(107,122,153,.2)}.chaleur-1 .num-proba{background:rgba(107,122,153,.15);color:var(--gris)}
+  .msg-vide{text-align:center;padding:4rem 2rem;color:var(--gris)}
+  .msg-vide .icone{font-size:3rem;margin-bottom:1rem}
+  .msg-vide p{font-size:1.1rem;line-height:1.6}
+  .note-bas{margin-top:2rem;padding:1rem;background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.15);border-radius:6px;font-size:.85rem;color:var(--gris);line-height:1.6}
+  .note-bas strong{color:var(--or)}
+  @media(max-width:600px){.grille-numeros{grid-template-columns:repeat(auto-fill,minmax(80px,1fr))}.saisie-grp input{width:50px}.etapes{flex-direction:column}}
+</style>
+</head>
+<body>
+<div class="stars" id="stars"></div>
+
+<header>
+  <div class="titre-principal">
+    ✦ Loto Statistiques ✦
+    <span>Analyse & Probabilités des Numéros</span>
+  </div>
+  <div class="decorline"><div class="decorline-diamond"></div></div>
+</header>
+
+<div class="tabs-wrapper">
+  <button class="tab-btn actif" onclick="changerOnglet('auto',this)">⚡ Mode Automatique</button>
+  <button class="tab-btn" onclick="changerOnglet('manuel',this)">✍️ Mode Manuel</button>
+</div>
+
+<main>
+
+  <!-- ===== PANNEAU AUTO ===== -->
+  <div class="panneau actif" id="panneau-auto">
+
+    <div class="etapes">
+      <div class="etape">
+        <div class="etape-num">1</div>
+        <h4>Télécharger le fichier FDJ</h4>
+        <p>Cliquez ici pour télécharger l'historique officiel :<br>
+          <a href="https://www.fdj.fr/jeux-de-tirage/loto/historique" target="_blank">→ fdj.fr/loto/historique</a><br>
+          Téléchargez le ZIP <strong>"De novembre 2019 à aujourd'hui"</strong>, puis extrayez-le.
+        </p>
+      </div>
+      <div class="etape">
+        <div class="etape-num">2</div>
+        <h4>Choisir le fichier CSV</h4>
+        <p>Dans le dossier extrait, vous trouverez un fichier <strong>.csv</strong>. Glissez-le ou sélectionnez-le dans la zone ci-dessous.</p>
+      </div>
+      <div class="etape">
+        <div class="etape-num">3</div>
+        <h4>Les statistiques s'affichent</h4>
+        <p>L'application analyse automatiquement tous les tirages et affiche le tableau complet instantanément.</p>
+      </div>
+    </div>
+
+    <div class="upload-zone" id="upload-zone"
+         ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropFichier(event)">
+      <input type="file" accept=".csv,.zip,.txt" onchange="fichierSelectionne(this.files[0])">
+      <div class="upload-icone">📂</div>
+      <div class="upload-titre">Glissez le fichier CSV ici</div>
+      <div class="upload-sous">ou cliquez pour sélectionner<br><strong>Fichier .csv extrait du ZIP FDJ</strong></div>
+    </div>
+
+    <div class="statut-bar" style="margin-top:1rem">
+      <div class="statut-indicateur" id="statut-ind"></div>
+      <span id="statut-txt">En attente du fichier CSV FDJ…</span>
+    </div>
+
+    <div id="resultats-auto"></div>
+  </div>
+
+  <!-- ===== PANNEAU MANUEL ===== -->
+  <div class="panneau" id="panneau-manuel">
+    <div class="manuel-form">
+      <h3>✍️ Saisir vos tirages manuellement</h3>
+      <p style="color:var(--gris);font-size:.95rem;margin-bottom:1.2rem">Entrez les 5 numéros principaux (1-49) et le numéro Chance (1-10) de chaque tirage.</p>
+      <div class="saisie-ligne">
+        <div class="saisie-grp"><label>N°1</label><input type="number" id="n1" min="1" max="49" placeholder="1-49"></div>
+        <div class="saisie-grp"><label>N°2</label><input type="number" id="n2" min="1" max="49" placeholder="1-49"></div>
+        <div class="saisie-grp"><label>N°3</label><input type="number" id="n3" min="1" max="49" placeholder="1-49"></div>
+        <div class="saisie-grp"><label>N°4</label><input type="number" id="n4" min="1" max="49" placeholder="1-49"></div>
+        <div class="saisie-grp"><label>N°5</label><input type="number" id="n5" min="1" max="49" placeholder="1-49"></div>
+        <div class="saisie-grp"><label>Chance</label><input type="number" id="nc" min="1" max="10" placeholder="1-10" style="width:70px"></div>
+        <button class="btn-action" onclick="ajouterTirage()">+ Ajouter</button>
+      </div>
+      <div class="erreur-msg" id="erreur-saisie"></div>
+      <div id="badge-wrapper"></div>
+      <div class="tirages-list" id="tirages-list"></div>
+      <div style="display:flex;gap:.8rem;margin-top:1rem;flex-wrap:wrap">
+        <button class="btn-action vert" onclick="exemples()">⚡ Charger 30 tirages exemples</button>
+        <button class="btn-action rouge" onclick="vider()">🗑 Tout effacer</button>
+      </div>
+    </div>
+    <div id="resultats-manuel"></div>
+  </div>
+
+</main>
+
+<script>
+// ===== ÉTOILES =====
+(function(){
+  const c=document.getElementById('stars');
+  for(let i=0;i<80;i++){
+    const s=document.createElement('div');s.className='star';
+    const sz=Math.random()*2+1;
+    s.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*100}%;width:${sz}px;height:${sz}px;--dur:${2+Math.random()*4}s;--delay:${Math.random()*4}s`;
+    c.appendChild(s);
+  }
+})();
+
+// ===== ONGLETS =====
+function changerOnglet(nom,btn){
+  document.querySelectorAll('.panneau').forEach(p=>p.classList.remove('actif'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('actif'));
+  document.getElementById('panneau-'+nom).classList.add('actif');
+  btn.classList.add('actif');
+}
+
+// ===== UPLOAD CSV =====
+function dragOver(e){e.preventDefault();document.getElementById('upload-zone').classList.add('drag')}
+function dragLeave(e){document.getElementById('upload-zone').classList.remove('drag')}
+function dropFichier(e){
+  e.preventDefault();
+  document.getElementById('upload-zone').classList.remove('drag');
+  const f=e.dataTransfer.files[0];
+  if(f) fichierSelectionne(f);
+}
+
+function fichierSelectionne(file){
+  if(!file) return;
+  setStatut('chargement','Lecture du fichier "'+file.name+'"…');
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const texte=e.target.result;
+      const tirages=parserCSV(texte);
+      if(tirages.length===0){
+        setStatut('erreur','Aucun tirage trouvé. Vérifiez que c\'est bien le fichier CSV extrait du ZIP FDJ.');
+        return;
+      }
+      setStatut('ok','✓ '+tirages.length.toLocaleString('fr')+' tirages chargés — Données FDJ officielles');
+      const stats=calculerStats(tirages);
+      afficherTableau(stats,tirages.length,'resultats-auto');
+    } catch(err){
+      setStatut('erreur','Erreur de lecture : '+err.message);
+    }
+  };
+  reader.onerror=function(){setStatut('erreur','Impossible de lire le fichier.')};
+  reader.readAsText(file,'UTF-8');
+}
+
+function setStatut(type,msg){
+  const ind=document.getElementById('statut-ind');
+  document.getElementById('statut-txt').textContent=msg;
+  ind.className='statut-indicateur '+(type==='ok'?'ok':type==='erreur'?'erreur':'chargement');
+}
+
+// ===== PARSER CSV FDJ =====
+// Gère le format FDJ (séparateur ;) — colonnes: boule_1..5, numero_chance
+function parserCSV(texte){
+  // Nettoyer les retours chariot Windows
+  const lignes=texte.replace(/\r/g,'').split('\n').filter(l=>l.trim());
+  if(lignes.length<2) return [];
+
+  const sep=lignes[0].includes(';')?';':',';
+  const entete=lignes[0].toLowerCase().split(sep).map(h=>h.trim().replace(/"/g,''));
+
+  // Trouver les colonnes boule_1 à boule_5
+  const idxB=[1,2,3,4,5].map(i=>{
+    let idx=entete.findIndex(h=>h===`boule_${i}`);
+    if(idx===-1) idx=entete.findIndex(h=>h.includes(`boule_${i}`));
+    return idx;
+  });
+  // Colonne chance
+  let idxC=entete.findIndex(h=>h==='numero_chance'||h==='numero chance'||h==='chance');
+  if(idxC===-1) idxC=entete.findIndex(h=>h.includes('chance'));
+
+  if(idxB.some(i=>i===-1)){
+    throw new Error('Colonnes boule_1..boule_5 introuvables. Format CSV inattendu.');
+  }
+
+  const tirages=[];
+  for(let i=1;i<lignes.length;i++){
+    const cols=lignes[i].split(sep).map(c=>c.trim().replace(/"/g,''));
+    const nums=idxB.map(idx=>parseInt(cols[idx])).filter(n=>n>=1&&n<=49);
+    const chance=idxC>-1?parseInt(cols[idxC]):null;
+    if(nums.length===5) tirages.push({nums,chance});
+  }
+  return tirages;
+}
+
+// ===== CALCUL STATS =====
+function calculerStats(tirages){
+  const freq=Array(50).fill(0);
+  const dernierTirage=Array(50).fill(null);
+  const n=tirages.length;
+  tirages.forEach((t,idx)=>{
+    t.nums.forEach(num=>{freq[num]++;dernierTirage[num]=idx});
+  });
+  const stats=[];
+  for(let num=1;num<=49;num++){
+    const f=freq[num];
+    const retard=dernierTirage[num]!==null?(n-1-dernierTirage[num]):n;
+    const freqNorm=n>0?f/n:0;
+    const score=freqNorm*0.7+(1/(retard+1))*0.3;
+    stats.push({n:num,freq:f,retard,score,freqNorm});
+  }
+  return stats;
+}
+
+// ===== AFFICHAGE =====
+function afficherTableau(stats,nbTirages,zoneId){
+  const zone=document.getElementById(zoneId);
+  const maxFreq=Math.max(...stats.map(s=>s.freq));
+  const maxScore=Math.max(...stats.map(s=>s.score));
+  const sorted=[...stats].sort((a,b)=>b.score-a.score);
+  const top5=sorted.slice(0,5);
+  const rangs=['🥇 1er','🥈 2e','🥉 3e','4e','5e'];
+
+  zone.innerHTML=`
+    <div class="tableau-section">
+      <div class="top5">
+        <div class="top5-titre">★ Les 5 numéros les plus favorables</div>
+        ${top5.map((s,i)=>`
+          <div class="top5-item">
+            <div class="top5-rang">${rangs[i]}</div>
+            <div class="top5-num">${s.n}</div>
+            <div class="top5-freq-text">${s.freq} fois sorties</div>
+          </div>`).join('')}
+      </div>
+      <div class="tableau-header">
+        <div class="tableau-titre">Tableau des 49 numéros</div>
+        <div class="legende">
+          <div class="legende-item"><div class="legende-dot" style="background:#e74c3c"></div>Très chaud</div>
+          <div class="legende-item"><div class="legende-dot" style="background:#e67e22"></div>Chaud</div>
+          <div class="legende-item"><div class="legende-dot" style="background:var(--or)"></div>Tiède</div>
+          <div class="legende-item"><div class="legende-dot" style="background:#2ecc71"></div>Normal</div>
+          <div class="legende-item"><div class="legende-dot" style="background:var(--gris)"></div>Froid</div>
+        </div>
+      </div>
+      <div class="filtres">
+        <button class="filtre-btn actif" onclick="trierPar('numero',this,'${zoneId}')">Par numéro</button>
+        <button class="filtre-btn" onclick="trierPar('frequence',this,'${zoneId}')">Fréquence ↓</button>
+        <button class="filtre-btn" onclick="trierPar('retard',this,'${zoneId}')">Retard ↓</button>
+        <button class="filtre-btn" onclick="trierPar('proba',this,'${zoneId}')">Probabilité ↓</button>
+      </div>
+      <div class="grille-numeros" id="grille-${zoneId}"></div>
+      <div class="note-bas">
+        ⚠️ <strong>Important :</strong> Le Loto est un jeu de hasard pur. Chaque tirage est mathématiquement indépendant des précédents. Ces statistiques reflètent les fréquences historiques et non une garantie pour les tirages futurs. Jouez de façon responsable.
+      </div>
+    </div>`;
+
+  zone._stats=stats;zone._maxFreq=maxFreq;zone._maxScore=maxScore;zone._nbTirages=nbTirages;
+  afficherGrille(stats,maxFreq,maxScore,nbTirages,'grille-'+zoneId);
+}
+
+function afficherGrille(stats,maxFreq,maxScore,nbTirages,grilleId){
+  document.getElementById(grilleId).innerHTML=stats.map(s=>{
+    const pctF=maxFreq>0?s.freq/maxFreq:0;
+    const pctS=maxScore>0?s.score/maxScore:0;
+    const barre=Math.round(pctF*60);
+    const chaleur=pctS>.8?5:pctS>.6?4:pctS>.4?3:pctS>.2?2:1;
+    const proba=nbTirages>0?((s.freq/(nbTirages*5))*100).toFixed(1):'—';
+    const retardTxt=s.retard===0?'Ce tirage !':s.retard===1?'1 tirage':`${s.retard} tirages`;
+    return `<div class="carte-numero chaleur-${chaleur}" style="--barre:${barre}%">
+      <div class="num-chiffre">${s.n}</div>
+      <div class="num-freq">Sorties</div>
+      <div class="num-valeur">${s.freq} fois</div>
+      <div class="num-retard">Retard : ${retardTxt}</div>
+      <div class="num-proba">${proba}%</div>
+    </div>`;
+  }).join('');
+}
+
+function trierPar(critere,btnEl,zoneId){
+  const zone=document.getElementById(zoneId);
+  if(!zone._stats) return;
+  btnEl.closest('.filtres').querySelectorAll('.filtre-btn').forEach(b=>b.classList.remove('actif'));
+  btnEl.classList.add('actif');
+  let s=[...zone._stats];
+  if(critere==='numero') s.sort((a,b)=>a.n-b.n);
+  else if(critere==='frequence') s.sort((a,b)=>b.freq-a.freq);
+  else if(critere==='retard') s.sort((a,b)=>b.retard-a.retard);
+  else if(critere==='proba') s.sort((a,b)=>b.score-a.score);
+  afficherGrille(s,zone._maxFreq,zone._maxScore,zone._nbTirages,'grille-'+zoneId);
+}
+
+// ===== MANUEL =====
+let tiragesManuels=[];
+
+function ajouterTirage(){
+  const err=document.getElementById('erreur-saisie');
+  err.style.display='none';
+  const vals=[1,2,3,4,5].map(i=>parseInt(document.getElementById('n'+i).value));
+  const nc=parseInt(document.getElementById('nc').value);
+  if(vals.some(v=>isNaN(v)||v<1||v>49)){err.textContent='Les numéros doivent être entre 1 et 49.';err.style.display='block';return}
+  if(new Set(vals).size!==5){err.textContent='Les 5 numéros doivent être différents.';err.style.display='block';return}
+  if(isNaN(nc)||nc<1||nc>10){err.textContent='Le numéro Chance doit être entre 1 et 10.';err.style.display='block';return}
+  vals.sort((a,b)=>a-b);
+  tiragesManuels.push({nums:vals,chance:nc});
+  [1,2,3,4,5].forEach(i=>document.getElementById('n'+i).value='');
+  document.getElementById('nc').value='';
+  document.getElementById('n1').focus();
+  majManuel();
+}
+
+function supprimerTirage(i){tiragesManuels.splice(i,1);majManuel()}
+function vider(){tiragesManuels=[];majManuel()}
+
+function majManuel(){
+  const list=document.getElementById('tirages-list');
+  const badge=document.getElementById('badge-wrapper');
+  const zone=document.getElementById('resultats-manuel');
+  badge.innerHTML=tiragesManuels.length>0?`<div class="nb-badge">📋 ${tiragesManuels.length} tirage${tiragesManuels.length>1?'s':''} enregistré${tiragesManuels.length>1?'s':''}</div>`:'';
+  list.innerHTML=tiragesManuels.map((t,i)=>`
+    <div class="tirage-item">
+      <span style="color:var(--gris);font-size:.8rem;min-width:30px">#${i+1}</span>
+      <div class="boules">
+        ${t.nums.map(n=>`<div class="boule-mini">${n}</div>`).join('')}
+        <div class="boule-mini chance">${t.chance}</div>
+      </div>
+      <button class="btn-suppr" onclick="supprimerTirage(${i})">✕</button>
+    </div>`).join('');
+  if(tiragesManuels.length>=2){
+    afficherTableau(calculerStats(tiragesManuels),tiragesManuels.length,'resultats-manuel');
+  } else {
+    zone.innerHTML=`<div class="msg-vide"><div class="icone">${tiragesManuels.length===0?'📊':'➕'}</div><p>${tiragesManuels.length===0?'Ajoutez au moins <strong>2 tirages</strong> pour voir les statistiques.':'Plus qu\'un tirage à ajouter…'}</p></div>`;
+  }
+}
+
+function genererSim(n){
+  const p=Array.from({length:49},()=>1+Math.random()*.4);
+  const total=p.reduce((a,b)=>a+b,0);
+  const t=[];
+  for(let i=0;i<n;i++){
+    const nums=[];
+    while(nums.length<5){
+      const r=Math.random()*total;let acc=0;
+      for(let j=0;j<49;j++){acc+=p[j];if(r<acc&&!nums.includes(j+1)){nums.push(j+1);break}}
+    }
+    nums.sort((a,b)=>a-b);
+    t.push({nums,chance:Math.ceil(Math.random()*10)});
+  }
+  return t;
+}
+
+function exemples(){tiragesManuels=genererSim(30);majManuel()}
+majManuel();
+</script>
+</body>
+</html>
